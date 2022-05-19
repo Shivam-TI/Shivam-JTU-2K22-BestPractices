@@ -1,5 +1,5 @@
 # Instructions
-This assignment consists a django-rest-framework app that has several violations of common best practices
+This assignment consists a django-rest-framework app that has several violations of common best practices.
 The assignment is mostly open-ended, just like the definition of what exactly is a best practice and what's not 😉
 
 Fork this repository and make a new branch named jtu-2k22-<ad_username>, fix as many best practices violations as you can find and make a PR, and assign kushal-ti as the reviewer.
