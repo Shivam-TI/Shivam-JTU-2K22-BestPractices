@@ -29,5 +29,5 @@ class UserExpense(models.Model):
     amount_owed = models.DecimalField(max_digits=10, decimal_places=2)
     amount_lent = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"user: {self.user}, amount_owed: {self.amount_owed} amount_lent: {self.amount_lent}"
