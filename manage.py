@@ -2,6 +2,7 @@
 import os
 import sys
 from django.core.management.commands.runserver import Command as runserver
+from decouple import config
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cjapp.settings")

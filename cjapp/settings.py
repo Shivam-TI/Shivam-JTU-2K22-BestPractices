@@ -62,7 +62,7 @@ REST_FRAMEWORK = {
     ],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json'
 }
-DEFAULT_PORT = "8080"
+DEFAULT_PORT = config("PORT")
 ROOT_URLCONF = 'cjapp.urls'
 
 TEMPLATES = [
@@ -119,7 +119,7 @@ WSGI_APPLICATION = 'cjapp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': config('DATABASE_NAME')),
+        'NAME': config('DATABASE_NAME'),
     }
 }
 
