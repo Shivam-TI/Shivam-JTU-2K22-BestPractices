@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from decimal import Decimal
-import pandas as pd
-import numpy as np
 import urllib.request
 from datetime import datetime
 
