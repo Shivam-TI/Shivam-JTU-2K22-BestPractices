@@ -3,6 +3,8 @@ from functools import wraps
 import urllib.request
 from datetime import datetime
 
+from restapi.constants import READER_TIMEOUT
+
 def calculate_time(logger, decorator=None):
 	assert callable(decorator)
 	def inner_decorator(func):
@@ -84,7 +86,7 @@ def multi_threaded_reader(urls, num_threads) -> list:
     """Read multiple files through HTTP"""
     result = []
     for url in urls:
-        data = reader(url, 60)
+        data = reader(url, READER_TIMEOUT)
         data = data.decode('utf-8')
         result.extend(data.split("\n"))
     result = sorted(result, key=lambda elem:elem[1])
