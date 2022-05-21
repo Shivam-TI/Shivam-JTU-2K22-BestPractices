@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from decimal import Decimal
-import urllib.request
-from datetime import datetime
 
 from django.http import HttpResponse
 from django.contrib.auth.models import User
@@ -23,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def index(_request) -> HttpResponse:
+def index() -> HttpResponse:
     return HttpResponse("Hello, world. You're at Rest.")
 
 @api_view(['POST'])
@@ -117,7 +114,7 @@ class GroupViewSet(ModelViewSet):
             groups = groups.filter(name__icontains=self.request.query_params.get('q', None))
         return groups
 
-    def create(self, request, *args, **kwargs) -> Response:
+    def create(self) -> Response:
         """Create a group and adds the user to it"""
         user = self.request.user
         data = self.request.data
@@ -146,7 +143,7 @@ class GroupViewSet(ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['get'], detail=True)
-    def expenses(self, _request, pk=None) -> Response:
+    def expenses(self, pk=None) -> Response:
         """Return expenses for a group"""
         group = Groups.objects.get(id=pk)
         if group not in self.get_queryset():
@@ -156,7 +153,7 @@ class GroupViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=True)
-    def balances(self, _request, pk=None) -> Response:
+    def balances(self, pk=None) -> Response:
         """Return balance for a group"""
         group = Groups.objects.get(id=pk)
         if group not in self.get_queryset():
