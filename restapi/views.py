@@ -48,13 +48,7 @@ def balance(request) -> Response:
     response = [{"user": k, "amount": int(v)} for k, v in final_balance.items()]
     return Response(response, status=status.HTTP_200_OK)
 
-
-def normalize(expense) -> list:
-    user_balances = expense.users.all()
-    dues = {}
-    for user_balance in user_balances:
-        dues[user_balance.user] = dues.get(user_balance.user, 0) + user_balance.amount_lent \
-                                  - user_balance.amount_owed
+def normalize_dues(dues):
     dues = [(k, v) for k, v in sorted(dues.items(), key=lambda item: item[1])]
     start = 0
     end = len(dues) - 1
@@ -69,6 +63,15 @@ def normalize(expense) -> list:
             start += 1
         else:
             end -= 1
+    return balances
+
+def normalize(expenses) -> list:
+    user_balances = expenses.users.all()
+    dues = {}
+    for user_balance in user_balances:
+        dues[user_balance.user] = dues.get(user_balance.user, 0) + user_balance.amount_lent \
+                                  - user_balance.amount_owed
+    balances = normalize_dues(dues)
     return balances
 
 
@@ -142,21 +145,7 @@ class GroupViewSet(ModelViewSet):
             for user_balance in user_balances:
                 dues[user_balance.user] = dues.get(user_balance.user, 0) + user_balance.amount_lent \
                                           - user_balance.amount_owed
-        dues = [(k, v) for k, v in sorted(dues.items(), key=lambda item: item[1])]
-        start = 0
-        end = len(dues) - 1
-        balances = []
-        while start < end:
-            amount = min(abs(dues[start][1]), abs(dues[end][1]))
-            amount = Decimal(amount).quantize(Decimal(10)**-2)
-            user_balance = {"from_user": dues[start][0].id, "to_user": dues[end][0].id, "amount": str(amount)}
-            balances.append(user_balance)
-            dues[start] = (dues[start][0], dues[start][1] + amount)
-            dues[end] = (dues[end][0], dues[end][1] - amount)
-            if dues[start][1] == 0:
-                start += 1
-            else:
-                end -= 1
+        balances = normalize_dues(dues)
 
         return Response(balances, status=status.HTTP_200_OK)
 
