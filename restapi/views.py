@@ -17,21 +17,30 @@ from rest_framework import status
 from restapi.serializers import Expenses, Groups, UserSerializer, Category, CategorySerializer, GroupSerializer, ExpensesSerializer, UserExpense
 from restapi.custom_exception import UnauthorizedUserException
 
+import logging
 
+logger = logging.getLogger(__name__)
+
+from restapi.utils import calculate_time
 
 def index(_request) -> HttpResponse:
     return HttpResponse("Hello, world. You're at Rest.")
 
-
 @api_view(['POST'])
+@calculate_time(logger)
 def logout(request) -> Response:
+    """Delete user authentication token"""
     request.user.auth_token.delete()
+    logger.info(f"{request.user} has logged out successfully!")
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])
+@calculate_time(logger)
 def balance(request) -> Response:
+    """Calculates and return the final balance of the requested user"""
     user = request.user
+    logger.info(f"Final balance of {user} requested")
     expenses = Expenses.objects.filter(users__in=user.expenses.all())
     final_balance = {}
     for expense in expenses:
@@ -46,9 +55,11 @@ def balance(request) -> Response:
     final_balance = {k: v for k, v in final_balance.items() if v != 0}
 
     response = [{"user": k, "amount": int(v)} for k, v in final_balance.items()]
+    logger.info(f"Final balance of {user}: {response}")
     return Response(response, status=status.HTTP_200_OK)
 
 def normalize_dues(dues):
+    """Normalize the dues and retunrn the balances"""
     dues = [(k, v) for k, v in sorted(dues.items(), key=lambda item: item[1])]
     start = 0
     end = len(dues) - 1
@@ -65,33 +76,41 @@ def normalize_dues(dues):
             end -= 1
     return balances
 
+@calculate_time(logger)
 def normalize(expenses) -> list:
+    """Normalize the expenses and retunrn the balances"""
+    logging.info(f"Normalizing requested for {expenses}")
     user_balances = expenses.users.all()
     dues = {}
     for user_balance in user_balances:
         dues[user_balance.user] = dues.get(user_balance.user, 0) + user_balance.amount_lent \
                                   - user_balance.amount_owed
     balances = normalize_dues(dues)
+    logging.info(f"The normalized balances: {balances}")
     return balances
 
 
 class UserViewSet(ModelViewSet):
+    """User View Set"""
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (AllowAny,)
 
 
 class CategoryViewSet(ModelViewSet):
+    """Category View Set"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     http_method_names = ['get', 'post']
 
 
 class GroupViewSet(ModelViewSet):
+    """Group View Set"""
     queryset = Groups.objects.all()
     serializer_class = GroupSerializer
 
     def get_queryset(self):
+        """Return the groupset of the user"""
         user = self.request.user
         groups = user.members.all()
         if self.request.query_params.get('q', None) is not None:
@@ -99,6 +118,7 @@ class GroupViewSet(ModelViewSet):
         return groups
 
     def create(self, request, *args, **kwargs) -> Response:
+        """Create a group and adds the user to it"""
         user = self.request.user
         data = self.request.data
         group = Groups(**data)
@@ -109,6 +129,7 @@ class GroupViewSet(ModelViewSet):
 
     @action(methods=['put'], detail=True)
     def members(self, request, pk=None) -> Response:
+        """Add member to a group"""
         group = Groups.objects.get(id=pk)
         if group not in self.get_queryset():
             raise UnauthorizedUserException()
@@ -126,6 +147,7 @@ class GroupViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=True)
     def expenses(self, _request, pk=None) -> Response:
+        """Return expenses for a group"""
         group = Groups.objects.get(id=pk)
         if group not in self.get_queryset():
             raise UnauthorizedUserException()
@@ -135,6 +157,7 @@ class GroupViewSet(ModelViewSet):
 
     @action(methods=['get'], detail=True)
     def balances(self, _request, pk=None) -> Response:
+        """Return balance for a group"""
         group = Groups.objects.get(id=pk)
         if group not in self.get_queryset():
             raise UnauthorizedUserException()
@@ -155,6 +178,7 @@ class ExpensesViewSet(ModelViewSet):
     serializer_class = ExpensesSerializer
 
     def get_queryset(self):
+        """Return the expenses queryset"""
         user = self.request.user
         if self.request.query_params.get('q', None) is not None:
             expenses = Expenses.objects.filter(users__in=user.expenses.all())\
@@ -167,6 +191,7 @@ class ExpensesViewSet(ModelViewSet):
 @authentication_classes([])
 @permission_classes([])
 def log_processor(request) -> Response:
+    """Process log files"""
     data = request.data
     num_threads = data['parallelFileProcessingCount']
     log_files = data['logFiles']
@@ -241,14 +266,13 @@ def transform(logs) -> list:
 
 
 def reader(url, timeout):
+    """Read file through HTTP"""
     with urllib.request.urlopen(url, timeout=timeout) as conn:
         return conn.read()
 
 
 def multi_threaded_reader(urls, num_threads) -> list:
-    """
-        Read multiple files through HTTP
-    """
+    """Read multiple files through HTTP"""
     result = []
     for url in urls:
         data = reader(url, 60)
