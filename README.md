@@ -1,7 +1,11 @@
-# Instructions
-This assignment consists of a django-rest-framework app that has several violations of common best practices.
-The assignment is mostly open-ended, just like the definition of what exactly is a best practice and what's not 😉
+# Setting Up
+ 
+Clone the repo  `git clone https://github.com/Shivam-TI/Shivam-JTU-2K22-BestPractices`
 
-Fork this repository and make a new branch named jtu-2k22-<ad_username>, fix as many best practices violations as you can find and make a PR, and assign kushal-ti as the reviewer.
+Chnage the current working directory to the repo folder using `cd` command
 
-If you don't know anything about django-rest-framework don't worry. You don't have to run the project or make any changes that requires knowledge intimate knowledge of django-rest-framework
+Run `pyton manage.py migrate` for adding missing migrations into the databse
+
+Build the Docker Image `docker build -t <image_name> .`
+
+Run the docker container `docker run <image_name`>
