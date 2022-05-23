@@ -82,13 +82,15 @@ def reader(url, timeout):
         return conn.read()
 
 
+@calculate_time
 def multi_threaded_reader(urls, num_threads) -> list:
-    """Read multiple files through HTTP"""
+    # """Read multiple files through HTTP"""
     result = []
-    for url in urls:
-        data = reader(url, READER_TIMEOUT)
-        data = data.decode('utf-8')
-        result.extend(data.split("\n"))
-    result = sorted(result, key=lambda elem:elem[1])
-    return result
-		
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+        futures = {executor.submit(reader, url, READER_TIMEOUT) : url for url in urls}
+        for future in concurrent.futures.as_completed(futures):
+            data = futures[future]
+            data.decode('utf-8')
+            result.extend(data.split("\n"))
+    result = sorted(result, key=lambda elem: elem[1])
+    return result		
